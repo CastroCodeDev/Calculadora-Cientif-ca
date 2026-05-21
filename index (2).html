@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CalcOS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #07101f;
+  --panel: #0d1b2e;
+  --panel2: #112035;
+  --border: #1a3050;
+  --blue: #2563eb;
+  --blue2: #3b82f6;
+  --blue-soft: rgba(37,99,235,0.12);
+  --text: #e2eeff;
+  --text2: #7a9acc;
+  --text3: #344a66;
+  --green: #10b981;
+  --red: #ef4444;
+  --radius: 12px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 40px;
+}
+
+/* TOPBAR */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+.logo span { color: var(--blue2); }
+
+.angle-toggle {
+  display: flex;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.angle-opt {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 14px;
+  cursor: pointer;
+  color: var(--text2);
+  border: none;
+  background: none;
+  transition: all 0.12s;
+}
+.angle-opt.active { background: var(--blue); color: white; }
+
+/* DISPLAY */
+.display {
+  margin: 16px 16px 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px 16px;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.display-hist {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text3);
+  text-align: right;
+  min-height: 18px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.display-expr {
+  font-family: 'DM Mono', monospace;
+  font-size: 15px;
+  color: var(--text2);
+  text-align: right;
+  min-height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.display-result {
+  font-family: 'DM Mono', monospace;
+  font-size: 42px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: right;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s;
+}
+.display-result.err { font-size: 16px; color: var(--red); padding-top: 8px; }
+
+.mem-indicator {
+  position: absolute;
+  top: 12px; left: 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--green);
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.25);
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: none;
+}
+.mem-indicator.show { display: inline-block; }
+
+/* TABS */
+.tabs {
+  display: flex;
+  margin: 14px 16px 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
+.tab {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px;
+  border-radius: 7px;
+  border: none;
+  background: none;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: center;
+}
+.tab.active { background: var(--blue); color: white; }
+
+/* KEYPAD */
+.keypad {
+  margin: 12px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: grid;
+  gap: 8px;
+}
+.r4 { grid-template-columns: repeat(4, 1fr); }
+.r5 { grid-template-columns: repeat(5, 1fr); }
+
+button.key {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  height: 58px;
+  transition: transform 0.07s, filter 0.1s;
+  position: relative;
+}
+button.key.small { font-size: 13px; height: 52px; }
+button.key.xsmall { font-size: 11px; height: 48px; font-family: 'DM Mono', monospace; }
+
+button.key:active { transform: scale(0.92); }
+button.key:hover { filter: brightness(1.15); }
+
+button.key.num {
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 20px;
+}
+button.key.op {
+  background: #0e2248;
+  color: var(--blue2);
+  border: 1px solid #1a3a6a;
+  font-size: 22px;
+}
+button.key.eq {
+  background: var(--blue);
+  color: white;
+  font-size: 24px;
+  box-shadow: 0 4px 20px rgba(37,99,235,0.35);
+}
+button.key.fn {
+  background: var(--panel);
+  color: var(--blue2);
+  border: 1px solid var(--border);
+  font-family: 'DM Mono', monospace;
+}
+button.key.clear {
+  background: rgba(239,68,68,0.08);
+  color: var(--red);
+  border: 1px solid rgba(239,68,68,0.2);
+}
+button.key.del {
+  background: rgba(239,68,68,0.05);
+  color: #aa3030;
+  border: 1px solid rgba(239,68,68,0.12);
+  font-size: 20px;
+}
+button.key.mem {
+  background: rgba(16,185,129,0.06);
+  color: #10a070;
+  border: 1px solid rgba(16,185,129,0.15);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+}
+button.key.const {
+  background: var(--panel);
+  color: #a78bfa;
+  border: 1px solid #2a1f4a;
+  font-family: 'DM Mono', monospace;
+}
+
+/* HISTORY PANEL */
+.history-panel {
+  margin: 12px 16px 0;
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.history-panel.show { display: flex; }
+
+.hist-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.hist-title { font-size: 13px; font-weight: 600; color: var(--text2); }
+.hist-clear { font-size: 12px; color: var(--text3); background: none; border: none; cursor: pointer; }
+.hist-clear:hover { color: var(--red); }
+
+.hist-list { overflow-y: auto; max-height: 320px; }
+
+.hist-empty {
+  padding: 28px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 13px;
+}
+
+.hist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  gap: 12px;
+  transition: background 0.1s;
+}
+.hist-item:last-child { border-bottom: none; }
+.hist-item:hover { background: var(--panel2); }
+
+.hist-expr {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.hist-res {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+.hist-res.err { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Calc<span>OS</span></div>
+  <div class="angle-toggle">
+    <button class="angle-opt active" id="angRad" onclick="setAngle('RAD')">RAD</button>
+    <button class="angle-opt" id="angDeg" onclick="setAngle('DEG')">DEG</button>
+  </div>
+</div>
+
+<div class="display">
+  <span class="mem-indicator" id="memInd">M</span>
+  <div class="display-hist" id="dispHist"></div>
+  <div class="display-expr" id="dispExpr"></div>
+  <div class="display-result" id="dispResult">0</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('std')">Básica</button>
+  <button class="tab" onclick="showTab('sci')">Científica</button>
+  <button class="tab" onclick="showTab('hist')">Histórico</button>
+</div>
+
+<!-- STD KEYPAD -->
+<div class="keypad" id="tabStd">
+  <div class="row r4">
+    <button class="key clear small" onclick="pressClear()">AC</button>
+    <button class="key del" onclick="pressDel()">⌫</button>
+    <button class="key fn small" onclick="pressPercent()">%</button>
+    <button class="key op" onclick="pressOp('÷')">÷</button>
+  </div>
+  <div class="row r4">
+    <button class="key num" onclick="pressNum('7')">7</button>
+    <button class="key num" onclick="pressNum('8')">8</button>
+    <button class="key num" onclick="pressNum('9')">9</button>
+    <button class="key op" onclick="pressOp('×')">×</button>
+  </div>
+  <div class="row r4">
+    <button class="key num" onclick="pressNum('4')">4</button>
+    <button class="key num" onclick="pressNum('5')">5</button>
+    <button class="key num" onclick="pressNum('6')">6</button>
+    <button class="key op" onclick="pressOp('−')">−</button>
+  </div>
+  <div class="row r4">
+    <button class="key num" onclick="pressNum('1')">1</button>
+    <button class="key num" onclick="pressNum('2')">2</button>
+    <button class="key num" onclick="pressNum('3')">3</button>
+    <button class="key op" onclick="pressOp('+')">+</button>
+  </div>
+  <div class="row" style="grid-template-columns: 2fr 1fr 1fr;">
+    <button class="key num" onclick="pressNum('0')" style="font-size:20px;">0</button>
+    <button class="key num" onclick="pressDot()">.</button>
+    <button class="key eq" onclick="pressEquals()">=</button>
+  </div>
+</div>
+
+<!-- SCI KEYPAD -->
+<div class="keypad" id="tabSci" style="display:none;">
+  <div class="row r5">
+    <button class="key mem xsmall" onclick="memOp('MC')">MC</button>
+    <button class="key mem xsmall" onclick="memOp('MR')">MR</button>
+    <button class="key mem xsmall" onclick="memOp('MS')">MS</button>
+    <button class="key mem xsmall" onclick="memOp('M+')">M+</button>
+    <button class="key mem xsmall" onclick="memOp('M-')">M−</button>
+  </div>
+  <div class="row r5">
+    <button class="key fn xsmall" onclick="pressFn('sin(')">sin</button>
+    <button class="key fn xsmall" onclick="pressFn('cos(')">cos</button>
+    <button class="key fn xsmall" onclick="pressFn('tan(')">tan</button>
+    <button class="key fn xsmall" onclick="pressFn('asin(')">sin⁻¹</button>
+    <button class="key fn xsmall" onclick="pressFn('acos(')">cos⁻¹</button>
+  </div>
+  <div class="row r5">
+    <button class="key fn xsmall" onclick="pressFn('sqrt(')">√x</button>
+    <button class="key fn xsmall" onclick="pressFn('cbrt(')">∛x</button>
+    <button class="key fn xsmall" onclick="pressOp('^2')">x²</button>
+    <button class="key fn xsmall" onclick="pressOp('^')">xʸ</button>
+    <button class="key fn xsmall" onclick="pressOp('!')">n!</button>
+  </div>
+  <div class="row r5">
+    <button class="key fn xsmall" onclick="pressFn('log(')">log</button>
+    <button class="key fn xsmall" onclick="pressFn('ln(')">ln</button>
+    <button class="key fn xsmall" onclick="pressFn('log2(')">log₂</button>
+    <button class="key fn xsmall" onclick="pressFn('abs(')">|x|</button>
+    <button class="key fn xsmall" onclick="pressFn('exp(')">eˣ</button>
+  </div>
+  <div class="row r5">
+    <button class="key const xsmall" onclick="pressConst('π')">π</button>
+    <button class="key const xsmall" onclick="pressConst('e')">e</button>
+    <button class="key fn xsmall" onclick="pressOp('(')">(</button>
+    <button class="key fn xsmall" onclick="pressOp(')')">)</button>
+    <button class="key fn xsmall" onclick="pressPercent()">%</button>
+  </div>
+  <div class="row r4">
+    <button class="key clear small" onclick="pressClear()">AC</button>
+    <button class="key del" onclick="pressDel()">⌫</button>
+    <button class="key fn small" onclick="pressToggleSign()">±</button>
+    <button class="key op" onclick="pressOp('÷')">÷</button>
+  </div>
+  <div class="row r4">
+    <button class="key num" onclick="pressNum('7')">7</button>
+    <button class="key num" onclick="pressNum('8')">8</button>
+    <button class="key num" onclick="pressNum('9')">9</button>
+    <button class="key op" onclick="pressOp('×')">×</button>
+  </div>
+  <div class="row r4">
+    <button class="key num" onclick="pressNum('4')">4</button>
+    <button class="key num" onclick="pressNum('5')">5</button>
+    <button class="key num" onclick="pressNum('6')">6</button>
+    <button class="key op" onclick="pressOp('−')">−</button>
+  </div>
+  <div class="row r4">
+    <button class="key num" onclick="pressNum('1')">1</button>
+    <button class="key num" onclick="pressNum('2')">2</button>
+    <button class="key num" onclick="pressNum('3')">3</button>
+    <button class="key op" onclick="pressOp('+')">+</button>
+  </div>
+  <div class="row" style="grid-template-columns: 2fr 1fr 1fr;">
+    <button class="key num" onclick="pressNum('0')" style="font-size:20px;">0</button>
+    <button class="key num" onclick="pressDot()">.</button>
+    <button class="key eq" onclick="pressEquals()">=</button>
+  </div>
+</div>
+
+<!-- HISTORY PANEL -->
+<div class="history-panel" id="tabHist">
+  <div class="hist-top">
+    <span class="hist-title">Histórico</span>
+    <button class="hist-clear" onclick="clearHistory()">Limpar</button>
+  </div>
+  <div class="hist-list" id="histList">
+    <div class="hist-empty" id="histEmpty">Nenhum cálculo ainda</div>
+  </div>
+</div>
+
+<script>
+let expr = '';
+let lastResult = '0';
+let justEvaled = false;
+let angleMode = 'RAD';
+let memory = null;
+let history = [];
+
+const dispResult = document.getElementById('dispResult');
+const dispExpr   = document.getElementById('dispExpr');
+const dispHist   = document.getElementById('dispHist');
+const memInd     = document.getElementById('memInd');
+
+function updateDisplay() {
+  dispResult.className = 'display-result';
+  if (expr === '') {
+    dispResult.textContent = lastResult || '0';
+    dispExpr.textContent = '';
+  } else {
+    dispExpr.textContent = expr;
+    const prev = tryEval(expr);
+    if (prev !== null) dispResult.textContent = fmt(prev);
+    else dispResult.textContent = expr.length > 16 ? '…'+expr.slice(-16) : expr;
+  }
+}
+
+function fmt(n) {
+  if (isNaN(n)) return 'NaN';
+  if (!isFinite(n)) return n > 0 ? '∞' : '-∞';
+  if (Math.abs(n) >= 1e15 || (Math.abs(n) < 1e-10 && n !== 0))
+    return n.toExponential(6).replace(/\.?0+e/, 'e');
+  return parseFloat(n.toPrecision(12)).toString();
+}
+
+function factorial(n) {
+  if (n < 0 || !Number.isInteger(n)) return NaN;
+  if (n > 170) return Infinity;
+  let r = 1; for (let i = 2; i <= n; i++) r *= i; return r;
+}
+
+function toJS(s) {
+  s = s.replace(/π/g, '(Math.PI)');
+  s = s.replace(/(?<![a-zA-Z])e(?![a-zA-Z])/g, '(Math.E)');
+  s = s.replace(/÷/g,'/').replace(/×/g,'*').replace(/−/g,'-');
+  const rad = angleMode === 'DEG';
+  ['sin','cos','tan'].forEach(f => {
+    s = s.replace(new RegExp(f+'\\(','g'), rad ? `Math.${f}(Math.PI/180*(` : `Math.${f}(`);
+  });
+  ['asin','acos','atan'].forEach(f => {
+    s = s.replace(new RegExp(f+'\\(','g'), rad ? `(180/Math.PI)*Math.${f}(` : `Math.${f}(`);
+  });
+  s = s.replace(/sqrt\(/g,'Math.sqrt(');
+  s = s.replace(/cbrt\(/g,'Math.cbrt(');
+  s = s.replace(/log2\(/g,'Math.log2(');
+  s = s.replace(/log\(/g,'Math.log10(');
+  s = s.replace(/ln\(/g,'Math.log(');
+  s = s.replace(/exp\(/g,'Math.exp(');
+  s = s.replace(/abs\(/g,'Math.abs(');
+  s = s.replace(/(\d+(?:\.\d+)?)\^2/g,'Math.pow($1,2)');
+  s = s.replace(/(\d+(?:\.\d+)?)\^(\d+(?:\.\d+)?)/g,'Math.pow($1,$2)');
+  s = s.replace(/\^/g,'**');
+  s = s.replace(/(\d+)!/g,(_,n)=>factorial(parseInt(n)));
+  return s;
+}
+
+function tryEval(e) {
+  try {
+    const r = Function('"use strict"; return ('+toJS(e)+')')();
+    if (typeof r === 'number') return r;
+  } catch(_) {}
+  return null;
+}
+
+function pressNum(d) {
+  if (justEvaled) { expr = ''; justEvaled = false; }
+  expr += d; updateDisplay();
+}
+function pressDot() {
+  if (justEvaled) { expr = '0'; justEvaled = false; }
+  const parts = expr.split(/[+\-×÷\^(]/);
+  if (parts[parts.length-1].includes('.')) return;
+  if (parts[parts.length-1] === '') expr += '0';
+  expr += '.'; updateDisplay();
+}
+function pressOp(op) {
+  justEvaled = false;
+  if (op === '^2') { expr += '^2'; updateDisplay(); return; }
+  if (op === '!') { expr += '!'; pressEquals(); return; }
+  const ops = ['+','−','×','÷','^'];
+  if (ops.includes(expr.slice(-1))) expr = expr.slice(0,-1);
+  expr += op; updateDisplay();
+}
+function pressFn(fn) {
+  if (justEvaled) { expr = fn + lastResult + ')'; justEvaled = false; }
+  else expr += fn;
+  updateDisplay();
+}
+function pressConst(c) {
+  if (justEvaled) { expr = ''; justEvaled = false; }
+  expr += c; updateDisplay();
+}
+function pressClear() {
+  expr = ''; lastResult = '0'; justEvaled = false;
+  dispHist.textContent = ''; dispExpr.textContent = '';
+  dispResult.textContent = '0'; dispResult.className = 'display-result';
+}
+function pressDel() {
+  if (justEvaled) { expr = ''; justEvaled = false; updateDisplay(); return; }
+  expr = expr.slice(0,-1); updateDisplay();
+}
+function pressToggleSign() {
+  const m = expr.match(/^(.*[+\−×÷(]|^)(-?)(\d[\d.]*)$/);
+  if (m) { expr = m[1] + (m[2]==='-'?'':'-') + m[3]; updateDisplay(); }
+}
+function pressPercent() {
+  const n = tryEval(expr);
+  if (n !== null) { expr = fmt(n/100); updateDisplay(); }
+}
+function pressEquals() {
+  if (!expr) return;
+  const result = tryEval(expr);
+  if (result === null) {
+    dispResult.className = 'display-result err';
+    dispResult.textContent = 'Expressão inválida';
+    addHistory(expr, 'Erro', true); return;
+  }
+  const f = fmt(result);
+  dispHist.textContent = expr + ' =';
+  dispExpr.textContent = '';
+  addHistory(expr, f, false);
+  lastResult = f; expr = ''; justEvaled = true;
+  dispResult.className = 'display-result';
+  dispResult.textContent = f;
+}
+function setAngle(m) {
+  angleMode = m;
+  document.getElementById('angRad').classList.toggle('active', m==='RAD');
+  document.getElementById('angDeg').classList.toggle('active', m==='DEG');
+}
+function memOp(cmd) {
+  const cur = tryEval(expr) ?? parseFloat(lastResult) ?? 0;
+  if (cmd==='MS') { memory = cur; }
+  else if (cmd==='MR' && memory!==null) { expr += fmt(memory); updateDisplay(); }
+  else if (cmd==='M+' && memory!==null) memory += cur;
+  else if (cmd==='M-' && memory!==null) memory -= cur;
+  else if (cmd==='MC') memory = null;
+  memInd.classList.toggle('show', memory !== null);
+}
+function addHistory(e, r, isErr) {
+  history.unshift({e, r, isErr});
+  if (history.length > 50) history.pop();
+  renderHistory();
+}
+function renderHistory() {
+  const list = document.getElementById('histList');
+  if (!history.length) {
+    list.innerHTML = '<div class="hist-empty">Nenhum cálculo ainda</div>';
+    return;
+  }
+  list.innerHTML = history.map((h,i) => `
+    <div class="hist-item" onclick="loadHist(${i})">
+      <span class="hist-expr">${h.e}</span>
+      <span class="hist-res${h.isErr?' err':''}">${h.isErr?'Erro':'= '+h.r}</span>
+    </div>`).join('');
+}
+function loadHist(i) {
+  expr = history[i].e; justEvaled = false;
+  showTab('std'); updateDisplay();
+}
+function clearHistory() { history = []; renderHistory(); }
+
+function showTab(t) {
+  document.getElementById('tabStd').style.display = t==='std' ? 'flex' : 'none';
+  document.getElementById('tabSci').style.display = t==='sci' ? 'flex' : 'none';
+  document.getElementById('tabHist').classList.toggle('show', t==='hist');
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', ['std','sci','hist'][i] === t);
+  });
+}
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey) return;
+  const k = e.key;
+  if (k>='0'&&k<='9') pressNum(k);
+  else if (k==='.') pressDot();
+  else if (k==='+') pressOp('+');
+  else if (k==='-') pressOp('−');
+  else if (k==='*') pressOp('×');
+  else if (k==='/') { e.preventDefault(); pressOp('÷'); }
+  else if (k==='Enter'||k==='=') pressEquals();
+  else if (k==='Backspace') pressDel();
+  else if (k==='Escape') pressClear();
+});
+</script>
+</body>
+</html>
